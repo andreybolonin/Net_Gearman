@@ -5,5 +5,10 @@
     "homepage": "http://pear.php.net/package/Net_Gearman",
     "require": {
         "php": ">=5.1.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "Net_": "Net/"
+        }
     }
 }
