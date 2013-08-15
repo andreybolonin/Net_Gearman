@@ -12,8 +12,8 @@ class Net_Gearman_Job_Sum extends Net_Gearman_Job_Common
      * Run the summing job
      *
      * @access      public
-     * @param       array       $arg
-     * @return      array
+     * @param  array $arg
+     * @return array
      */
     public function run($arg)
     {
@@ -27,5 +27,3 @@ class Net_Gearman_Job_Sum extends Net_Gearman_Job_Common
         return array('sum' => $sum);
     }
 }
-
-?>

@@ -1,10 +1,9 @@
 <?php
 
-require_once 'Net/Gearman/Client.php';
-
 $set = new Net_Gearman_Set();
 
-function result($func, $handle, $result) {
+function result($func, $handle, $result)
+{
     var_dump($func);
     var_dump($handle);
     var_dump($result);
@@ -27,5 +26,3 @@ foreach ($sql as $s) {
 
 $client = new Net_Gearman_Client(array('dev01'));
 $client->runSet($set);
-
-?>

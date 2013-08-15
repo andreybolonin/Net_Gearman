@@ -5,24 +5,21 @@
  *
  * PHP version 5.1.0+
  *
- * LICENSE: This source file is subject to the New BSD license that is 
+ * LICENSE: This source file is subject to the New BSD license that is
  * available through the world-wide-web at the following URI:
- * http://www.opensource.org/licenses/bsd-license.php. If you did not receive  
- * a copy of the New BSD License and are unable to obtain it through the web, 
+ * http://www.opensource.org/licenses/bsd-license.php. If you did not receive
+ * a copy of the New BSD License and are unable to obtain it through the web,
  * please send a note to license@php.net so we can mail you a copy immediately.
  *
  * @category  Net
  * @package   Net_Gearman
- * @author    Joe Stump <joe@joestump.net> 
+ * @author    Joe Stump <joe@joestump.net>
  * @copyright 2007-2008 Digg.com, Inc.
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   CVS: $Id$
  * @link      http://pear.php.net/package/Net_Gearman
  * @link      http://www.danga.com/gearman/
  */
-
-require_once 'Net/Gearman/Connection.php';
-require_once 'Net/Gearman/Job.php';
 
 /**
  * Gearman worker class
@@ -32,14 +29,14 @@ require_once 'Net/Gearman/Job.php';
  *
  * <code>
  * <?php
- * 
+ *
  * $servers = array(
  *     '127.0.0.1:7003',
  *     '127.0.0.1:7004'
  * );
- * 
+ *
  * $abilities = array('HelloWorld', 'Foo', 'Bar');
- * 
+ *
  * try {
  *     $worker = new Net_Gearman_Worker($servers);
  *     foreach ($abilities as $ability) {
@@ -49,14 +46,14 @@ require_once 'Net/Gearman/Job.php';
  * } catch (Net_Gearman_Exception $e) {
  *     echo $e->getMessage() . "\n";
  *     exit;
- * } 
- * 
+ * }
+ *
  * ?>
  * </code>
  *
  * @category  Net
  * @package   Net_Gearman
- * @author    Joe Stump <joe@joestump.net> 
+ * @author    Joe Stump <joe@joestump.net>
  * @copyright 2007-2008 Digg.com, Inc.
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @link      http://www.danga.com/gearman/
@@ -85,7 +82,7 @@ class Net_Gearman_Worker
      */
     protected $abilities = array();
 
-    
+
     /**
      * Callbacks registered for this worker
      *
@@ -122,22 +119,21 @@ class Net_Gearman_Worker
     /**
      * Constructor
      *
-     * @param array $servers List of servers to connect to
-     * @param string $id     Optional unique id for this worker
-     * 
-     * @return void
-     * @throws Net_Gearman_Exception
-     * @see Net_Gearman_Connection
+     * @param array  $servers List of servers to connect to
+     * @param string $id      Optional unique id for this worker
+     *
+     * @throws Exception
+     * @return \Net_Gearman_Worker
      */
     public function __construct($servers, $id = "")
     {
         if (!is_array($servers) && strlen($servers)) {
             $servers = array($servers);
         } elseif (is_array($servers) && !count($servers)) {
-            throw new Net_Gearman_Exception('Invalid servers specified');
+            throw new \Exception('Invalid servers specified');
         }
 
-        if(empty($id)){
+        if (empty($id)) {
             $id = "pid_".getmypid()."_".uniqid();
         }
 
@@ -145,11 +141,11 @@ class Net_Gearman_Worker
 
         foreach ($servers as $s) {
             try {
-                $conn = Net_Gearman_Connection::connect($s);   
+                $conn = Net_Gearman_Connection::connect($s);
 
                 Net_Gearman_Connection::send($conn, "set_client_id", array("client_id" => $this->id));
 
-                $this->conn[$s] = $conn;             
+                $this->conn[$s] = $conn;
 
             } catch (Net_Gearman_Exception $e) {
 
@@ -158,7 +154,7 @@ class Net_Gearman_Worker
         }
 
         if (empty($this->conn)) {
-            throw new Net_Gearman_Exception(
+            throw new \Exception(
                 "Couldn't connect to any available servers"
             );
         }
@@ -181,9 +177,9 @@ class Net_Gearman_Worker
             $params['timeout'] = $timeout;
             $call              = 'can_do_timeout';
         }
-        
+
         $this->abilities[$ability] = $timeout;
-        
+
         foreach ($this->conn as $conn) {
             Net_Gearman_Connection::send($conn, $call, $params);
         }
@@ -195,11 +191,11 @@ class Net_Gearman_Worker
      * This starts the worker on its journey of actually working. The first
      * argument is a PHP callback to a function that can be used to monitor
      * the worker. If no callback is provided then the worker works until it
-     * is killed. The monitor is passed two arguments; whether or not the 
+     * is killed. The monitor is passed two arguments; whether or not the
      * worker is idle and when the last job was ran.
      *
      * @param callback $monitor Function to monitor work
-     * 
+     *
      * @return void
      * @see Net_Gearman_Connection::send(), Net_Gearman_Connection::connect()
      * @see Net_Gearman_Worker::doWork(), Net_Gearman_Worker::addAbility()
@@ -219,11 +215,11 @@ class Net_Gearman_Worker
         while ($working) {
             $sleep = true;
             $currentTime = time();
-            
+
             foreach ($this->conn as $server => $socket) {
                 try {
                     $worked = $this->doWork($socket);
-                } catch (Net_Gearman_Exception $e) {
+                } catch (\Exception $e) {
                     unset($this->conn[$server]);
                     $this->retryConn[$server] = $currentTime;
                 }
@@ -253,17 +249,17 @@ class Net_Gearman_Worker
                         $retryChange            = true;
                         unset($this->retryConn[$s]);
                         Net_Gearman_Connection::send($conn, "set_client_id", array("client_id" => $this->id));
-                    } catch (Net_Gearman_Exception $e) {
+                    } catch (\Exception $e) {
                         $this->retryConn[$s] = $currentTime;
                     }
                 }
             }
-            
+
             if (count($this->conn) == 0) {
                 // sleep to avoid wasted cpu cycles if no connections to block on using socket_select
                 sleep(1);
             }
-            
+
             if ($retryChange === true) {
                 // broadcast all abilities to all servers
                 foreach ($this->abilities as $ability => $timeout) {
@@ -282,12 +278,12 @@ class Net_Gearman_Worker
      *
      * Sends the 'grab_job' command and then listens for either the 'noop' or
      * the 'no_job' command to come back. If the 'job_assign' comes down the
-     * pipe then we run that job. 
+     * pipe then we run that job.
      *
-     * @param resource $socket The socket to work on 
-     * 
-     * @return boolean Returns true if work was done, false if not
-     * @throws Net_Gearman_Exception
+     * @param resource $socket The socket to work on
+     *
+     * @throws Exception
+     * @return boolean   Returns true if work was done, false if not
      * @see Net_Gearman_Connection::send()
      */
     protected function doWork($socket)
@@ -297,24 +293,24 @@ class Net_Gearman_Worker
         $resp = array('function' => 'noop');
         while (count($resp) && $resp['function'] == 'noop') {
             $resp = Net_Gearman_Connection::blockingRead($socket);
-        } 
+        }
 
         if (in_array($resp['function'], array('noop', 'no_job'))) {
             return false;
         }
 
         if ($resp['function'] != 'job_assign') {
-            throw new Net_Gearman_Exception('Holy Cow! What are you doing?!');
+            throw new \Exception('Holy Cow! What are you doing?!');
         }
 
         $name   = $resp['data']['func'];
         $handle = $resp['data']['handle'];
         $arg    = array();
 
-        if (isset($resp['data']['arg']) && 
+        if (isset($resp['data']['arg']) &&
             Net_Gearman_Connection::stringLength($resp['data']['arg'])) {
             $arg = json_decode($resp['data']['arg'], true);
-            if($arg === null){
+            if ($arg === null) {
                 $arg = $resp['data']['arg'];
             }
         }
@@ -322,16 +318,16 @@ class Net_Gearman_Worker
         $job = Net_Gearman_Job::factory($name, $socket, $handle);
         try {
             $this->start($handle, $name, $arg);
-            $res = $job->run($arg); 
+            $res = $job->run($arg);
             if (!is_array($res)) {
                 $res = array('result' => $res);
             }
 
             $job->complete($res);
             $this->complete($handle, $name, $res);
-        } catch (Net_Gearman_Job_Exception $e) {
-            $job->fail(); 
-            $this->fail($handle, $name, $e); 
+        } catch (\Exception $e) {
+            $job->fail();
+            $this->fail($handle, $name, $e);
         }
 
         // Force the job's destructor to run
@@ -345,14 +341,14 @@ class Net_Gearman_Worker
      *
      * @param callback $callback A valid PHP callback
      * @param integer  $type     Type of callback
-     * 
+     *
+     * @throws Exception
      * @return void
-     * @throws Net_Gearman_Exception
      */
     public function attachCallback($callback, $type = self::JOB_COMPLETE)
     {
         if (!is_callable($callback)) {
-            throw new Net_Gearman_Exception('Invalid callback specified');
+            throw new \Exception('Invalid callback specified');
         }
 
         $this->callback[$type][] = $callback;
@@ -384,7 +380,7 @@ class Net_Gearman_Worker
      * @param string $handle The job's Gearman handle
      * @param string $job    The name of the job
      * @param array  $result The job's returned result
-     * 
+     *
      * @return void
      */
     protected function complete($handle, $job, array $result)
@@ -401,13 +397,13 @@ class Net_Gearman_Worker
     /**
      * Run the fail callbacks
      *
-     * @param string $handle The job's Gearman handle
-     * @param string $job    The name of the job
-     * @param object $error  The exception thrown
-     * 
+     * @param string            $handle The job's Gearman handle
+     * @param string            $job    The name of the job
+     * @param \Exception|object $error  The exception thrown
+     *
      * @return void
      */
-    protected function fail($handle, $job, PEAR_Exception $error)
+    protected function fail($handle, $job, \Exception $error)
     {
         if (!count($this->callback[self::JOB_FAIL])) {
             return; // No callbacks to run
@@ -451,5 +447,3 @@ class Net_Gearman_Worker
         return false;
     }
 }
-
-?>

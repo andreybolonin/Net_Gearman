@@ -5,24 +5,21 @@
  *
  * PHP version 5.1.0+
  *
- * LICENSE: This source file is subject to the New BSD license that is 
+ * LICENSE: This source file is subject to the New BSD license that is
  * available through the world-wide-web at the following URI:
- * http://www.opensource.org/licenses/bsd-license.php. If you did not receive  
- * a copy of the New BSD License and are unable to obtain it through the web, 
+ * http://www.opensource.org/licenses/bsd-license.php. If you did not receive
+ * a copy of the New BSD License and are unable to obtain it through the web,
  * please send a note to license@php.net so we can mail you a copy immediately.
  *
  * @category  Net
  * @package   Net_Gearman
- * @author    Joe Stump <joe@joestump.net> 
+ * @author    Joe Stump <joe@joestump.net>
  * @copyright 2007-2008 Digg.com, Inc.
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   CVS: $Id$
  * @link      http://pear.php.net/package/Net_Gearman
  * @link      http://www.danga.com/gearman/
- */ 
-
-require_once 'Net/Gearman/Connection.php';
-require_once 'Net/Gearman/Set.php';
+ */
 
 /**
  * A client for submitting jobs to Gearman
@@ -32,7 +29,7 @@ require_once 'Net/Gearman/Set.php';
  *
  * @category  Net
  * @package   Net_Gearman
- * @author    Joe Stump <joe@joestump.net> 
+ * @author    Joe Stump <joe@joestump.net>
  * @copyright 2007-2008 Digg.com, Inc.
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @link      http://www.danga.com/gearman/
@@ -65,7 +62,7 @@ class Net_Gearman_Client
      *
      * @param array   $servers An array of servers or a single server
      * @param integer $timeout Timeout in microseconds
-     * 
+     *
      * @return void
      * @throws Net_Gearman_Exception
      * @see Net_Gearman_Connection
@@ -75,7 +72,7 @@ class Net_Gearman_Client
         if (!is_array($servers) && strlen($servers)) {
             $servers = array($servers);
         } elseif (is_array($servers) && !count($servers)) {
-            throw new Net_Gearman_Exception('Invalid servers specified');
+            throw new \Exception('Invalid servers specified');
         }
 
         $this->servers = $servers;
@@ -106,7 +103,7 @@ class Net_Gearman_Client
      * Fire off a background task with the given arguments
      *
      * @param string $func Name of job to run
-     * @param array  $args First key should be args to send 
+     * @param array  $args First key should be args to send
      *
      * @return void
      * @see Net_Gearman_Task, Net_Gearman_Set
@@ -124,6 +121,7 @@ class Net_Gearman_Client
         $set = new Net_Gearman_Set();
         $set->addTask($task);
         $this->runSet($set);
+
         return $task->handle;
     }
 
@@ -131,8 +129,8 @@ class Net_Gearman_Client
      * Submit a task to Gearman
      *
      * @param object $task Task to submit to Gearman
-     * 
-     * @return      void
+     *
+     * @return void
      * @see         Net_Gearman_Task, Net_Gearman_Client::runSet()
      */
     protected function submitTask(Net_Gearman_Task $task)
@@ -151,7 +149,7 @@ class Net_Gearman_Client
 
         // if we don't have a scalar
         // json encode the data
-        if(!is_scalar($task->arg)){
+        if (!is_scalar($task->arg)) {
             $arg = json_encode($task->arg);
         } else {
             $arg = $task->arg;
@@ -177,11 +175,11 @@ class Net_Gearman_Client
      * Run a set of tasks
      *
      * @param object $set A set of tasks to run
-     * 
+     *
      * @return void
      * @see Net_Gearman_Set, Net_Gearman_Task
      */
-    public function runSet(Net_Gearman_Set $set) 
+    public function runSet(Net_Gearman_Set $set)
     {
         $totalTasks = $set->tasksCount;
         $taskKeys   = array_keys($set->tasks);
@@ -213,18 +211,18 @@ class Net_Gearman_Client
     }
 
     /**
-     * Handle the response read in 
+     * Handle the response read in
      *
      * @param array    $resp  The raw array response
-     * @param resource $s     The socket 
+     * @param resource $s     The socket
      * @param object   $tasks The tasks being ran
-     * 
+     *
      * @return void
      * @throws Net_Gearman_Exception
      */
-    protected function handleResponse($resp, $s, Net_Gearman_Set $tasks) 
+    protected function handleResponse($resp, $s, Net_Gearman_Set $tasks)
     {
-        if (isset($resp['data']['handle']) && 
+        if (isset($resp['data']['handle']) &&
             $resp['function'] != 'job_created') {
             $task = $tasks->getTask($resp['data']['handle']);
         }
@@ -235,8 +233,8 @@ class Net_Gearman_Client
             $task->complete(json_decode($resp['data']['result'], true));
             break;
         case 'work_status':
-            $n = (int)$resp['data']['numerator'];
-            $d = (int)$resp['data']['denominator'];
+            $n = (int) $resp['data']['numerator'];
+            $d = (int) $resp['data']['denominator'];
             $task->status($n, $d);
             break;
         case 'work_fail':
@@ -252,18 +250,18 @@ class Net_Gearman_Client
             $tasks->handles[$task->handle] = $task->uniq;
             break;
         case 'error':
-            throw new Net_Gearman_Exception('An error occurred');
+            throw new \Exception('An error occurred');
         default:
-            throw new Net_Gearman_Exception(
+            throw new \Exception(
                 'Invalid function ' . $resp['function']
-            ); 
+            );
         }
     }
 
     /**
      * Disconnect from Gearman
      *
-     * @return      void
+     * @return void
      */
     public function disconnect()
     {
@@ -279,12 +277,10 @@ class Net_Gearman_Client
     /**
      * Destructor
      *
-     * @return      void
+     * @return void
      */
     public function __destruct()
     {
         $this->disconnect();
     }
 }
-
-?>
