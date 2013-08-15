@@ -10,3 +10,9 @@ Homepage
 
 http://pear.php.net/package/Net_Gearman
 
+Additionally
+
+Replaced all custom Exception on \Exception.
+Removed all require_once.
+Fixed coding standards by php-cs-fixer tool.
+
